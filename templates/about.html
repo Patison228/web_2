@@ -3,3 +3,59 @@
 {% block title %}
 О нас
 {% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <h1 class="display-4 mb-4">О моем проекте</h1>
+            <p class="lead mb-4">
+                Fefnews - это современная платформа для публикации и обсуждения 
+                самых интересных новостей из ДВФУ, математики и нейбута.
+            </p>
+            
+            <div class="mb-5">
+                <h3 class="mb-3">Моя миссия</h3>
+                <p class="mb-3">
+                    Мы стремимся предоставлять качественный контент и распространять 
+                    информацию о так называемом "Neybut's street" и ДВФУ.
+                </p>
+                <p>
+                    Моя цель - быть вашим надежным источником актуальной информации.
+                </p>
+            </div>
+
+            <div class="mb-5">
+                <h3 class="mb-3">Что я собственно предлагаю</h3>
+                <ul class="list-unstyled">
+                    <li class="mb-2">- Свежие новости из ДВФУ</li>
+                    <li class="mb-2">- Персональные рекомендации</li>
+                    <li class="mb-2">- Удобный и современный интерфейс</li>
+                </ul>
+            </div>
+            
+            <div class="bg-light p-4 rounded">
+                <h4>Дата создания:</h4>
+                <p class="mb-0">
+                    11 октября, 2025 г.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="text-center">
+                <img src="{{ url_for('static', filename='image/about_photo.jpg') }}" 
+                     alt="О нашем проекте" 
+                     class="img-fluid rounded shadow-lg mb-4"
+                     style="max-height: 500px; object-fit: cover;">
+                
+                <div class="text-muted">
+                    <small>Создатель проекта / Максим Ватрушка</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,37 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <title>{% block title %}S{% endblock %}</title>
-</head>
-    <header class="p-3 text-bg-dark">
-        <div class="container">
-            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-                
-                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
-                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap">
-                        <use xlink:href="#bootstrap"></use>
-                    </svg>
-                </a>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css_styles/main.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css_styles/contacts.css') }}">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+        
+    <body>
+        <div class="page">
+            <header class="p-3 text-bg-dark">
+                <div class="container">
+                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                        
+                        <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                            <img class="header_img" src="{{ url_for('static', filename='image/logo.jpg') }}" alt="icon">
+                        </a>
 
-                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-                    <li><a href="{{url_for('index')}}" class="nav-link px-2 text-secondary">Главная</a></li>
-				    <li><a href="{{url_for('about')}}" class="nav-link px-2 text-secondary">О проекте</a></li>
-				    <li><a href="{{url_for('contact')}}" class="nav-link px-2 text-secondary">Контакты</a></li>
-				    <li><a href="{{url_for('feedback')}}" class="nav-link px-2 text-secondary">Обратная связь</a></li>
-                </ul>
+                        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                            <li><a href="{{url_for('index')}}" class="nav-link px-2 text-secondary">Главная</a></li>
+                            <li><a href="{{url_for('about')}}" class="nav-link px-2 text-secondary">О проекте</a></li>
+                            <li><a href="{{url_for('contact')}}" class="nav-link px-2 text-secondary">Контакты</a></li>
+                            <li><a href="{{url_for('feedback')}}" class="nav-link px-2 text-secondary">Обратная связь</a></li>
+                        </ul>
 
-                <div class="text-end">
-                    <button type="button" class="btn btn-outline-light me-2">Войти</button>
-                    <button type="button" class="btn btn-warning">Зарегистрироваться</button>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-light me-2">Войти</button>
+                            <button type="button" class="btn btn-warning">Зарегистрироваться</button>
+                        </div>
+
+                    </div>
+                </div>            
+            </header>
+
+            <div class="content">
+                {% block content%}{% endblock %}
+            </div>
+
+                <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            
+                <div class="col-md-4 d-flex justify-content-center align-items-center">
+                    <span class="mb-3 mb-md-0 text-body-secondary">© 2025 Fefnews</span>
                 </div>
 
-            </div>
+                <ul class="nav col-md-4 justify-content-center list-unstyled d-flex">
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#instagram">
+                            <i class="bi bi-instagram" style="font-size: 20px;"></i>
+                        </a>
+                    </li>
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#facebook">
+                            <i class="bi bi-facebook" style="font-size: 20px;"></i>
+                        </a>
+                    </li>
+                    <li class="ms-3">
+                        <a class="text-body-secondary" href="#telegram">
+                            <i class="bi bi-telegram" style="font-size: 20px;"></i>
+                        </a>
+                    </li>
+                </ul>
+            </footer>
         </div>
-    </header>
-<body>
-    
-</body>
+    </body>
 </html>

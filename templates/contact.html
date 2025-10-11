@@ -3,3 +3,28 @@
 {% block title %}
 Контакты
 {% endblock %}
+
+{% block content %}
+<div class="contacts_container">
+    <h1 class="contacts_title">Контакты</h1>
+    
+    <div class="contacts_box">
+        <ul class="contacts_list">
+            <li>
+                <span class="contact_icon">📱</span>
+                <a href="tel:+78005553535">+7 (800) 555-35-35</a>
+            </li>
+            <li>
+                <span class="contact_icon">📍</span>
+                <span>г. Владивосток, ул. Пушкина д. Колотушкина 5</span>
+            </li>
+        </ul>
+        
+        <div class="social_links">
+            <a href="#" class="social_link">Telegram</a>
+            <a href="#" class="social_link">VKontakte</a>
+            <a href="#" class="social_link">Instagram</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
