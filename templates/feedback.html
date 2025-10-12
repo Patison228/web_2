@@ -1,5 +1,85 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-Обратная связь
+{% block title %}Обратная связь - Новостной Блог{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-dark mb-3">Обратная связь</h1>
+                <p class="lead text-muted">Мы всегда рады вашим вопросам и предложениям</p>
+            </div>
+
+            {% if errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading">Пожалуйста, исправьте следующие ошибки:</h5>
+                <ul class="mb-0">
+                    {% for field, message in errors.items() %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-body p-5">
+                    <form method="POST" action="{{ url_for('feedback') }}" class="needs-validation" novalidate>
+                        <div class="mb-4">
+                            <label for="username" class="form-label fs-5 fw-semibold">
+                                <i class="bi bi-person-fill me-2"></i>Ваше имя *
+                            </label>
+
+                            <input type="text" 
+                                   class="form-control form-control-lg {% if errors and errors.username %}is-invalid{% endif %}" 
+                                   id="username" 
+                                   name="username" 
+                                   value="{{ username or '' }}"
+                                   placeholder="Введите ваше полное имя"
+                                   required>
+
+                            <div class="form-text">Минимум 2 символа</div>
+
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="usermail" class="form-label fs-5 fw-semibold">
+                                <i class="bi bi-envelope-fill me-2"></i>Email адрес *
+                            </label>
+
+                            <input type="email" 
+                                   class="form-control form-control-lg {% if errors and errors.usermail %}is-invalid{% endif %}" 
+                                   id="usermail" 
+                                   name="usermail" 
+                                   value="{{ usermail or '' }}"
+                                   placeholder="example@email.com"
+                                   required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="textmess" class="form-label fs-5 fw-semibold">
+                                <i class="bi bi-chat-left-text-fill me-2"></i>Ваше сообщение *
+                            </label>
+
+                            <textarea class="form-control form-control-lg {% if errors and errors.textmess %}is-invalid{% endif %}" 
+                                      id="textmess" 
+                                      name="textmess" 
+                                      rows="8"
+                                      placeholder="Расскажите подробнее о вашем вопросе или предложении..."
+                                      required>{{ textmess or '' }}</textarea>
+
+                            <div class="form-text">Минимум 10 символов. Опишите вашу проблему как можно подробнее</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold fs-5">
+                                <i class="bi bi-send-fill me-2"></i>Отправить сообщение
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
