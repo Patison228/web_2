@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <article class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1 class="display-5 fw-bold">{{ article.title }}</h1>
+
+                    {% if article.date.date() == today %}
+                    <span class="badge bg-danger fs-6">Новое!</span>
+                    {% endif %}
+
+                </div>
+                
+                <div class="text-muted mb-4">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    Опубликовано: {{ article.date.strftime('%d.%m.%Y в %H:%M') }}
+                </div>
+
+                <div class="article-content fs-5 lh-base">
+                    <p>{{ article.content }}</p>
+                </div>
+
+                <div class="mt-5 p-4 bg-light rounded">
+                    <h4>Дополнительно: </h4>
+                    <p>Вы просматриваете статью с идентификатором {{ article.id }}.</p>
+                </div>
+            </article>
+
+            <div class="d-flex justify-content-center mt-5 pt-4 border-top">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Назад к списку статей
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

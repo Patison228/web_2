@@ -1,11 +1,60 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-Главная страница
-{% endblock %}
+{% block title %}Главная{% endblock %}
 
-{% block content%}
-<div>
-    <h1>Добро пожаловать в мой новостной блог!</h1>
+{% block content %}
+<div class="container">
+    <div class="jumbotron bg-light p-5 rounded-3 mb-5">
+        <h1 class="display-6">Добро пожаловать в Новостной Блог!</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Последние статьи</h2>
+            
+            {% for article in articles %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h3 class="card-title h4">
+                                <a href="{{ url_for('news', id=article.id) }}" class="text-decoration-none text-dark">
+                                    {{ article.title }}
+                                </a>
+                            </h3>
+
+                            <p class="card-text text-muted">{{ article.preview }}</p>
+
+                        </div>
+
+                        <div class="text-end ms-3">
+
+                            {% if article.date.date() == today %}
+                            <span class="badge bg-danger mb-2">Новое!</span>
+                            {% endif %}
+
+                            <div class="text-muted small">
+                                {{ article.date.strftime('%d.%m.%Y') }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <a href="{{ url_for('news', id=article.id) }}" class="btn btn-outline-primary mt-3">
+                        Читать далее
+                    </a>
+                </div>
+
+            </div>
+            {% endfor %}
+
+            {% if not articles %}
+            <div class="alert alert-info">
+                На данный момент статей нет. Зайдите позже!
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
