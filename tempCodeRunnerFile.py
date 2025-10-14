@@ -84,21 +84,16 @@ def feedback():
             errors['textmess'] = 'Сообщение должно содержать минимум 10 символов'
         
         if errors:
-            return render_template('feedback.html', 
+            return render_template('feedback_wide.html', 
                                  errors=errors, 
                                  username=username, 
                                  usermail=usermail, 
                                  textmess=textmess)
-        else:
-            print(f"   Name: {username}")
-            print(f"   Email: {usermail}")
-            print(f"   Message: {textmess}")
-            print(f"   Send time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            
-            return render_template('page_after_feedback.html',
-                                username=username, 
-                                usermail=usermail, 
-                                textmess=textmess)
+        
+        return render_template('post_feedback.html',
+                             username=username, 
+                             usermail=usermail, 
+                             textmess=textmess)
     
     else:
         return render_template('feedback.html')
