@@ -29,9 +29,17 @@
                             <li><a href="{{url_for('feedback')}}" class="nav-link px-2 text-secondary">Обратная связь</a></li>
                         </ul>
 
-                        <div class="text-end">
-                            <button type="button" class="btn btn-outline-light me-2">Войти</button>
-                            <button type="button" class="btn btn-warning">Зарегистрироваться</button>
+                        <div class="col-md-3 text-end">
+                            {% if current_user.is_authenticated %}
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted">Привет, {{ current_user.name }}!</span>
+                                <a href="{{ url_for('create_article') }}" class="btn btn-outline-success btn-sm">Создать статью</a>
+                                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Выйти из аккаунта</a>
+                            </div>
+                            {% else %}
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Войти</a>
+                            <a href="{{ url_for('register') }}" class="btn btn-primary">Регистрация</a>
+                            {% endif %}
                         </div>
 
                     </div>

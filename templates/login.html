@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Вход
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row justify-content-center">
+		<div class="col-12 col-md-10 col-lg-12">
+			<div class="card shadow">
+				<div class="card-body p-5">
+					<h1 class="card-title text-center mb-4">Вход в систему</h1>
+
+					{% with messages = get_flashed_messages(with_categories=true) %}
+					{% if messages %}
+					{% for category, message in messages %}
+					<div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
+						role="alert">
+						{{ message }}
+						<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+					</div>
+					{% endfor %}
+					{% endif %}
+					{% endwith %}
+
+					<form method="POST">
+						<div class="mb-3">
+							<label class="form-label">Email:</label>
+							<input class="form-control {% if errors and errors.email %}is-invalid{% endif %}"
+								type="email" name="email" maxlength="100" value="{{ email if email else '' }}">
+							{% if errors and errors.email %}
+							<div class="invalid-feedback d-block">{{ errors.email }}</div>
+							{% endif %}
+						</div>
+
+						<div class="mb-3">
+							<label class="form-label">Пароль:</label>
+							<input class="form-control {% if errors and errors.password %}is-invalid{% endif %}"
+								type="password" name="password">
+							{% if errors and errors.password %}
+							<div class="invalid-feedback d-block">{{ errors.password }}</div>
+							{% endif %}
+						</div>
+
+						{% if errors and errors.login %}
+						<div class="alert alert-danger">{{ errors.login }}</div>
+						{% endif %}
+
+						<div class="d-grid gap-2">
+							<button type="submit" class="btn btn-primary btn-lg">Войти</button>
+						</div>
+					</form>
+
+					<div class="text-center mt-4">
+						<p>Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрируйтесь</a></p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
