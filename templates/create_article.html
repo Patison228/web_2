@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Создать статью{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Создать новую статью</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('create_article') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Заголовок статьи</label>
+                            <input type="text" 
+                                   class="form-control {% if errors and errors.title %}is-invalid{% endif %}" 
+                                   id="title" 
+                                   name="title" 
+                                   value="{{ title or '' }}" 
+                                   placeholder="Введите заголовок статьи..."
+                                   required>
+                            {% if errors and errors.title %}
+                                <div class="invalid-feedback">{{ errors.title }}</div>
+                            {% endif %}
+                            <div class="form-text">Минимум 5 символов</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="text" class="form-label">Текст статьи</label>
+                            <textarea class="form-control {% if errors and errors.text %}is-invalid{% endif %}" 
+                                      id="text" 
+                                      name="text" 
+                                      rows="12" 
+                                      placeholder="Напишите содержание статьи здесь..."
+                                      required>{{ text or '' }}</textarea>
+                            {% if errors and errors.text %}
+                                <div class="invalid-feedback">{{ errors.text }}</div>
+                            {% endif %}
+                            <div class="form-text">Минимум 10 символов</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Опубликовать статью
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
