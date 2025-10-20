@@ -1,54 +1,71 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Редактировать статью{% endblock %}
+{% block title %}
+Редактирование статьи
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0"><i class="bi bi-pencil"></i> Редактировать статью</h4>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('edit_article', id=article.id) }}">
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Заголовок статьи</label>
-                            <input type="text" 
-                                   class="form-control {% if errors and errors.title %}is-invalid{% endif %}" 
-                                   id="title" 
-                                   name="title" 
-                                   value="{{ title or article.title }}" 
-                                   required>
-                            {% if errors and errors.title %}
-                                <div class="invalid-feedback">{{ errors.title }}</div>
-                            {% endif %}
-                        </div>
+<div class="container">
+	<h1>Редактирование статьи</h1>
+	<p>Измените данные статьи</p>
 
-                        <div class="mb-4">
-                            <label for="text" class="form-label">Текст статьи</label>
-                            <textarea class="form-control {% if errors and errors.text %}is-invalid{% endif %}" 
-                                      id="text" 
-                                      name="text" 
-                                      rows="12" 
-                                      required>{{ text or article.text }}</textarea>
-                            {% if errors and errors.text %}
-                                <div class="invalid-feedback">{{ errors.text }}</div>
-                            {% endif %}
-                        </div>
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	{% if messages %}
+	{% for category, message in messages %}
+	<div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
+		role="alert">
+		{{ message }}
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+	{% endif %}
+	{% endwith %}
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('news', id=article.id) }}" class="btn btn-outline-secondary me-md-2">
-                                <i class="bi bi-x-circle"></i> Отмена
-                            </a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-check-circle"></i> Сохранить изменения
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+	<form name="edit_article" method="POST">
+		<div class="form-list">
+			<div class="mb-3">
+				<label class="form-label">Заголовок статьи:</label>
+				<input class="form-control {% if errors and errors.title %}is-invalid{% endif %}" type="text"
+					name="title" maxlength="200" value="{{ article.title if article else (title if title else '') }}">
+				{% if errors and errors.title %}
+				<div class="invalid-feedback d-block">{{ errors.title }}</div>
+				{% endif %}
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Категория:</label>
+				<select class="form-control {% if errors and errors.category %}is-invalid{% endif %}" name="category">
+					<option value="">Выберите категорию</option>
+					{% for cat in categories %}
+					<option value="{{ cat }}" {% if (article.category if article else category)==cat %}selected{% endif
+						%}>
+						{{ cat }}
+					</option>
+					{% endfor %}
+				</select>
+				{% if errors and errors.category %}
+				<div class="invalid-feedback d-block">{{ errors.category }}</div>
+				{% endif %}
+				<div class="form-text">
+					Или введите новую категорию:
+					<input type="text" class="form-control mt-1" name="new_category" placeholder="Новая категория">
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Текст статьи:</label>
+				<textarea class="form-control {% if errors and errors.text %}is-invalid{% endif %}" name="text"
+					rows="10">{{ article.text if article else (text if text else '') }}</textarea>
+				{% if errors and errors.text %}
+				<div class="invalid-feedback d-block">{{ errors.text }}</div>
+				{% endif %}
+			</div>
+			<div class="mb-3">
+				<button type="submit" class="btn btn-primary">Сохранить изменения</button>
+				<a href="{{ url_for('news', id=article.id) }}" class="btn btn-secondary">Отмена</a>
+			</div>
+		</div>
+	</form>
+
 </div>
 {% endblock %}

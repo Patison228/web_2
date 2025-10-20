@@ -1,0 +1,29 @@
+.fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+}
+
+
+.content-wrapper {
+    margin-top: 80px; 
+    position: relative;
+    z-index: 1; 
+}
+
+
+.news-detail {
+    position: relative;
+    z-index: 1;
+}
+
+.badge, .breadcrumb, .alert, .card, .btn {
+    position: relative;
+    z-index: 1;
+}
+
+header {
+    position: static !important;
+}

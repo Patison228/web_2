@@ -28,8 +28,10 @@
 						<div class="row">
 							<div class="col-md-6 mb-3">
 								<label class="form-label">Имя:</label>
+								
 								<input class="form-control {% if errors and errors.name %}is-invalid{% endif %}"
 									type="text" name="name" maxlength="100" value="{{ name if name else '' }}">
+
 								{% if errors and errors.name %}
 								<div class="invalid-feedback d-block">{{ errors.name }}</div>
 								{% endif %}
@@ -37,11 +39,14 @@
 
 							<div class="col-md-6 mb-3">
 								<label class="form-label">Email:</label>
+
 								<input class="form-control {% if errors and errors.email %}is-invalid{% endif %}"
 									type="email" name="email" maxlength="100" value="{{ email if email else '' }}">
+
 								{% if errors and errors.email %}
 								<div class="invalid-feedback d-block">{{ errors.email }}</div>
 								{% endif %}
+
 							</div>
 						</div>
 

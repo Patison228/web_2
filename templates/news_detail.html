@@ -1,45 +1,116 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}{{ article.title }}{% endblock %}
+{% block title %}
+{{ article.title }} - Новостной Блог
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            
-            <article class="mb-5">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h1 class="display-5">{{ article.title }}</h1>
+<div class="container mt-4">
+	<nav aria-label="breadcrumb" class="mb-4">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Главная</a></li>
+			<li class="breadcrumb-item active">{{ article.title }}</li>
+		</ol>
+	</nav>
 
-                    {% if article.date.date() == today %}
-                    <span class="badge bg-danger fs-6">Новое!</span>
-                    {% endif %}
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	{% if messages %}
+	{% for category, message in messages %}
+	<div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
+		role="alert">
+		{{ message }}
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+	{% endfor %}
+	{% endif %}
+	{% endwith %}
 
-                </div>
-                
-                <div class="text-muted mb-4">
-                    <i class="bi bi-calendar-event me-2"></i>
-                    Опубликовано: {{ article.date.strftime('%d.%m.%Y в %H:%M') }}
-                </div>
+	<article class="news-detail">
+		<header class="mb-4 pb-3 border-bottom">
+            <h1 class="display-6 mb-2">{{ article.title }}</h1>
 
-                <div class="article-content fs-5 lh-base">
-                    <p>{{ article.content }}</p>
-                </div>
+			<div class="text-muted">
+				<p class="mb-1">Опубликовано: {{ article.date.strftime('%d.%m.%Y в %H:%M') }}</p>
 
-                <div class="mt-5 p-4 bg-light rounded">
-                    <h4>Дополнительно: </h4>
-                    <p>Вы просматриваете статью с идентификатором {{ article.id }}.</p>
-                </div>
-            </article>
+				{% if article.author %}
+				<p class="mb-1">Автор: {{ article.author }}</p>
+				{% endif %}
 
-            <div class="d-flex justify-content-center mt-5 pt-4 border-top">
-                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Назад к списку статей
-                </a>
+				{% if article.category %}
+				<p class="mb-0">Категория: {{ article.category }}</p>
+				{% endif %}
+			</div>
+		</header>
 
-            </div>
+		<div class="article-content mb-5">
+			<p class="lead">{{ article.content }}</p>
+		</div>
 
-        </div>
-    </div>
+		<div class="comments-section mt-5">
+			<h4 class="mb-4">Комментарии ({{ comments|length }})</h4>
+
+			<div class="card mb-4">
+				<div class="card-body">
+					<h5 class="card-title">Добавить комментарий</h5>
+					<form method="POST" action="{{ url_for('add_comment', article_id=article.id) }}">
+						<div class="mb-3">
+							<label class="form-label">Текст комментария:</label>
+							<textarea class="form-control {% if errors and errors.comment_text %}is-invalid{% endif %}"
+								name="comment_text" 
+								rows="4"
+								placeholder="Введите ваш комментарий...">{{ comment_text if comment_text else '' }}</textarea>
+							
+							{% if errors and errors.comment_text %}
+							<div class="invalid-feedback d-block">{{ errors.comment_text }}</div>
+							{% endif %}
+						</div>
+
+						<button type="submit" class="btn btn-primary">Отправить комментарий</button>
+					</form>
+				</div>
+			</div>
+
+			{% if comments %}
+			{% for comment in comments %}
+			<div class="card mb-3">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-start mb-2">
+						<h6 class="card-subtitle mb-1 text-primary">{{ comment.author_name }}</h6>
+						<small class="text-muted">{{ comment.date.strftime('%d.%m.%Y в %H:%M') }}</small>
+					</div>
+					<p class="card-text">{{ comment.text }}</p>
+				</div>
+			</div>
+			{% endfor %}
+			{% else %}
+			<div class="text-center py-4">
+				<p class="text-muted">Пока нет комментариев</p>
+			</div>
+			{% endif %}
+		</div>
+
+		<div class="mt-5 pt-3 border-top d-flex justify-content-between">
+			<a href="{{ url_for('index') }}" class="btn btn-secondary">
+				Вернуться
+			</a>
+
+			<div>
+				<a href="{{ url_for('edit_article', id=article.id) }}" class="btn btn-warning">
+					Редактировать
+				</a>
+			</div>
+		</div>
+	</article>
 </div>
+
+<style>
+/* Убираем sticky-поведение для всех элементов в статье */
+.news-detail header,
+.news-detail .article-content,
+.news-detail .comments-section,
+.news-detail .border-top {
+    position: static !important;
+    top: auto !important;
+}
+</style>
 {% endblock %}

@@ -25,6 +25,7 @@
                         <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                             <li><a href="{{url_for('index')}}" class="nav-link px-2 text-secondary">Главная</a></li>
                             <li><a href="{{url_for('about')}}" class="nav-link px-2 text-secondary">О проекте</a></li>
+                            <li><a href="{{url_for('articles')}}" class="nav-link px-2 text-secondary">Все статьи</a></li>
                             <li><a href="{{url_for('contact')}}" class="nav-link px-2 text-secondary">Контакты</a></li>
                             <li><a href="{{url_for('feedback')}}" class="nav-link px-2 text-secondary">Обратная связь</a></li>
                         </ul>
@@ -46,11 +47,11 @@
                 </div>            
             </header>
 
-            <div class="content">
-                {% block content%}{% endblock %}
-            </div>
+                <div class="content">
+                    {% block content%}{% endblock %}
+                </div>
 
-                <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
             
                 <div class="col-md-4 d-flex justify-content-center align-items-center">
                     <span class="mb-3 mb-md-0 text-body-secondary">© 2025 Fefnews</span>
