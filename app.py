@@ -71,6 +71,7 @@ def init_db():
             
             db.session.commit()
 
+
 def get_articles(category=None):
     query = Article.query
     
@@ -93,22 +94,27 @@ def get_articles(category=None):
     
     return articles
 
+
 def get_categories():
     categories = db.session.query(Article.category).distinct().all()
     return [category[0] for category in categories]
 
+
 @app.context_processor
 def inject_today():
     return {'today': datetime.now().date()}
+
 
 @app.context_processor
 def inject_categories():
     categories = get_categories()
     return {'categories': categories}
 
+
 @app.context_processor
 def inject_current_user():
     return {'current_user': current_user}
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -164,6 +170,7 @@ def register():
     
     return render_template('register.html')
 
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -197,24 +204,29 @@ def login():
     
     return render_template('login.html')
 
+
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
 @app.route("/")
 def index():
     articles = get_articles()
     return render_template('index.html', articles=articles)
 
+
 @app.route("/about")
 def about():
     return render_template('about.html')
 
+
 @app.route("/contact")
 def contact():
     return render_template('contact.html')
+
 
 @app.route("/feedback", methods=['POST','GET'])
 def feedback():
@@ -243,6 +255,7 @@ def feedback():
     else:
         return render_template('feedback.html')
 
+
 @app.route('/news/<int:id>')
 def news(id):
     article = Article.query.get_or_404(id)
@@ -260,6 +273,7 @@ def news(id):
     }
     
     return render_template('news_detail.html', article=article_data, comments=comments)
+
 
 @app.route('/add-comment/<int:article_id>', methods=['POST'])
 @login_required 
@@ -304,6 +318,7 @@ def add_comment(article_id):
 
     return redirect(url_for('news', id=article_id))
 
+
 @app.route('/create-article', methods=['POST', 'GET'])
 @login_required
 def create_article():
@@ -341,6 +356,7 @@ def create_article():
         return redirect(url_for('news', id=article.id))
 
     return render_template('create_article.html')
+
 
 @app.route('/edit-article/<int:id>', methods=['POST', 'GET'])
 @login_required
@@ -380,6 +396,7 @@ def edit_article(id):
 
     return render_template('edit_article.html', article=article)
 
+
 @app.route('/delete-article/<int:id>', methods=['POST'])
 @login_required
 def delete_article(id):
@@ -393,14 +410,17 @@ def delete_article(id):
     db.session.commit()
     return redirect(url_for('index'))
 
+
 @app.route("/articles")
 def articles():
     category = request.args.get('category', '').strip()
+
     if category:
         return articles_by_category(category)
     
     articles = get_articles()
     return render_template('articles.html', articles=articles)
+
 
 @app.route("/articles/<category>")
 def articles_by_category(category):
@@ -412,6 +432,7 @@ def articles_by_category(category):
     
     articles = get_articles(category=category)
     return render_template('articles.html', articles=articles, current_category=category)
+
 
 if __name__ == '__main__':
     init_db()

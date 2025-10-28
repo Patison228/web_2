@@ -20,17 +20,17 @@
 
 	<div class="card mb-4">
 		<div class="card-body">
-			<h5 class="card-title">Фильтр по категориям</h5>
+			<h5 class="card-title">Категории (фильтры)</h5>
 
 			<div class="categories-nav mb-3">
 				<div class="d-flex flex-wrap gap-2">
 					<a href="{{ url_for('articles') }}"
-						class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+						class="btn {% if not current_category %}btn-success{% else %}btn-outline-success{% endif %} btn-sm">
 						Все категории
 					</a>
 					{% for cat in categories %}
 					<a href="{{ url_for('articles_by_category', category=cat) }}"
-						class="btn {% if current_category == cat %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+						class="btn {% if current_category == cat %}btn-success{% else %}btn-outline-success{% endif %} btn-sm">
 						{{ cat }}
 					</a>
 					{% endfor %}
@@ -62,7 +62,7 @@
 								Автор: {{ article.author }}
 							</span>
 							{% endif %}
-							<span class="badge bg-info">{{ article.category }}</span>
+							<span class="badge bg-success">{{ article.category }}</span>
 						</div>
 					</div>
 
@@ -70,7 +70,7 @@
 
 					<div class="row align-items-center">
 						<div class="col-md-6">
-							<a href="{{ url_for('news', id=article.id) }}" class="btn btn-primary btn-sm">
+							<a href="{{ url_for('news', id=article.id) }}" class="btn btn-success btn-sm">
 								Читать полностью →
 							</a>
 						</div>

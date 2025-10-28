@@ -8,7 +8,7 @@
 <div class="container mt-4">
 	<nav aria-label="breadcrumb" class="mb-4">
 		<ol class="breadcrumb">
-			<li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Главная</a></li>
+			<li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none text-success">Главная</a></li>
 			<li class="breadcrumb-item active">{{ article.title }}</li>
 		</ol>
 	</nav>
@@ -65,7 +65,7 @@
 							{% endif %}
 						</div>
 
-						<button type="submit" class="btn btn-primary">Отправить комментарий</button>
+						<button type="submit" class="btn btn-success">Отправить комментарий</button>
 					</form>
 				</div>
 			</div>
@@ -75,7 +75,7 @@
 			<div class="card mb-3">
 				<div class="card-body">
 					<div class="d-flex justify-content-between align-items-start mb-2">
-						<h6 class="card-subtitle mb-1 text-primary">{{ comment.author_name }}</h6>
+						<h6 class="card-subtitle mb-1 text-success">{{ comment.author_name }}</h6>
 						<small class="text-muted">{{ comment.date.strftime('%d.%m.%Y в %H:%M') }}</small>
 					</div>
 					<p class="card-text">{{ comment.text }}</p>
@@ -103,13 +103,4 @@
 	</article>
 </div>
 
-<style>
-.news-detail header,
-.news-detail .article-content,
-.news-detail .comments-section,
-.news-detail .border-top {
-    position: static !important;
-    top: auto !important;
-}
-</style>
 {% endblock %}
