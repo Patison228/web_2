@@ -116,8 +116,6 @@ def inject_current_user():
     return {'current_user': current_user}
 
 
-<<<<<<< HEAD
-=======
 @app.route('/api/articles', methods=['GET'])
 def api_get_articles():
     
@@ -426,7 +424,6 @@ def api_delete_comment(id):
 
 
 
->>>>>>> new_api_1
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
