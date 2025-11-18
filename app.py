@@ -1,14 +1,19 @@
-from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
+from flask import Flask, render_template, request, flash, url_for, redirect, jsonify, session
 import re
 from datetime import datetime, timedelta
 from models import db, User, Article, Comment
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+import jwt
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fefnews.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = '123456'
+app.config['JWT_SECRET_KEY'] = 'jwt-secret-key-123456'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
 
 db.init_app(app)
 
@@ -20,6 +25,96 @@ login_manager.login_message = 'Пожалуйста, войдите для до�
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+def create_access_token(user_id):
+    payload = {
+        'user_id': user_id,
+        'type': 'access',
+        'exp': datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
+    }
+    return jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+def create_refresh_token(user_id):
+    payload = {
+        'user_id': user_id,
+        'type': 'refresh', 
+        'exp': datetime.utcnow() + app.config['JWT_REFRESH_TOKEN_EXPIRES']
+    }
+    return jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+def verify_token(token):
+    try:
+        payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
+def get_token():
+
+    if 'Authorization' in request.headers:
+        auth_header = request.headers['Authorization']
+        parts = auth_header.split(" ")
+        if len(parts) == 2 and parts[0] == 'Bearer':
+            return parts[1]
+    
+    
+    return session.get('access_token')
+
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = get_token()
+        
+        if not token:
+            return jsonify({'message': 'Access token is missing'}), 401
+        
+        payload = verify_token(token)
+        if not payload:
+            return jsonify({'message': 'Access token is invalid or expired'}), 401
+        
+        if payload.get('type') != 'access':
+            return jsonify({'message': 'Access token required'}), 401
+        
+        current_user_id = payload['user_id']
+        current_user = User.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({'message': 'User not found'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+
+
+def refresh_token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        refresh_token = session.get('refresh_token')
+        
+        if not refresh_token:
+            return jsonify({'message': 'Refresh token is missing'}), 401
+        
+        payload = verify_token(refresh_token)
+        if not payload:
+            return jsonify({'message': 'Refresh token is invalid or expired'}), 401
+        
+        if payload.get('type') != 'refresh':
+            return jsonify({'message': 'Refresh token required'}), 401
+        
+        current_user_id = payload['user_id']
+        current_user = User.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({'message': 'User not found'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
 
 def init_db():
     with app.app_context():
@@ -71,7 +166,6 @@ def init_db():
             
             db.session.commit()
 
-
 def get_articles(category=None):
     query = Article.query
     
@@ -94,31 +188,251 @@ def get_articles(category=None):
     
     return articles
 
-
 def get_categories():
     categories = db.session.query(Article.category).distinct().all()
     return [category[0] for category in categories]
 
-
 @app.context_processor
 def inject_today():
     return {'today': datetime.now().date()}
-
 
 @app.context_processor
 def inject_categories():
     categories = get_categories()
     return {'categories': categories}
 
-
 @app.context_processor
 def inject_current_user():
     return {'current_user': current_user}
 
+@app.route('/api/auth/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    email = data.get('email', '').strip()
+    password = data.get('password', '').strip()
+    
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user and user.check_password(password):
+        access_token = create_access_token(user.id)
+        refresh_token = create_refresh_token(user.id)
+        
+        session['user_id'] = user.id
+        session['access_token'] = access_token
+        session['refresh_token'] = refresh_token
+        session['logged_in'] = True
+        session.permanent = True
+        
+        return jsonify({
+            'message': 'Login successful',
+            'access_token': access_token,  
+            'refresh_token': refresh_token, 
+            'user': {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email
+            }
+        }), 200
+    else:
+        return jsonify({'error': 'Invalid email or password'}), 401
+
+@app.route('/api/auth/refresh', methods=['POST'])
+@refresh_token_required
+def api_refresh(current_user):
+    new_access_token = create_access_token(current_user.id)
+    
+    session['access_token'] = new_access_token
+    
+    return jsonify({
+        'access_token': new_access_token,  
+        'user': {
+            'id': current_user.id,
+            'name': current_user.name,
+            'email': current_user.email
+        }
+    }), 200
+
+@app.route('/api/auth/logout', methods=['POST'])
+def api_logout():
+    session.clear()
+    return jsonify({'message': 'Logout successful'}), 200
+
+@app.route('/api/auth/check', methods=['GET'])
+def api_check_auth():
+    token = get_token()
+    if not token:
+        return jsonify({'authenticated': False}), 200
+    
+    payload = verify_token(token)
+    if not payload or payload.get('type') != 'access':
+        return jsonify({'authenticated': False}), 200
+    
+    user = User.query.get(payload['user_id'])
+    if not user:
+        return jsonify({'authenticated': False}), 200
+    
+    return jsonify({
+        'authenticated': True,
+        'user': {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email
+        }
+    }), 200
+
+
+@app.route('/api/protected/articles', methods=['POST'])
+@jwt_required
+def api_create_article_protected(current_user):
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    errors = {}
+    if not data.get('title') or not data['title'].strip():
+        errors['title'] = 'Title is required'
+    if not data.get('text') or not data['text'].strip():
+        errors['text'] = 'Text is required'
+    if not data.get('category') or not data['category'].strip():
+        errors['category'] = 'Category is required'
+    
+    if errors:
+        return jsonify({'errors': errors}), 400
+    
+    article = Article(
+        title=data['title'].strip(),
+        text=data['text'].strip(),
+        category=data['category'].strip(),
+        user_id=current_user.id,
+        created_date=datetime.now()
+    )
+    
+    db.session.add(article)
+    db.session.commit()
+    
+    return jsonify({
+        'id': article.id,
+        'title': article.title,
+        'text': article.text,
+        'category': article.category,
+        'author': article.author.name,
+        'created_date': article.created_date.isoformat()
+    }), 201
+
+@app.route('/api/protected/articles/<int:id>', methods=['PUT'])
+@jwt_required
+def api_update_article_protected(current_user, id):
+    article = Article.query.get_or_404(id)
+    
+    if article.user_id != current_user.id:
+        return jsonify({'error': 'You can only edit your own articles'}), 403
+    
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    errors = {}
+    if 'title' in data and (not data['title'] or not data['title'].strip()):
+        errors['title'] = 'Title cannot be empty'
+    if 'text' in data and (not data['text'] or not data['text'].strip()):
+        errors['text'] = 'Text cannot be empty'
+    if 'category' in data and (not data['category'] or not data['category'].strip()):
+        errors['category'] = 'Category cannot be empty'
+    
+    if errors:
+        return jsonify({'errors': errors}), 400
+    
+    if 'title' in data:
+        article.title = data['title'].strip()
+    if 'text' in data:
+        article.text = data['text'].strip()
+    if 'category' in data:
+        article.category = data['category'].strip()
+    
+    db.session.commit()
+    
+    return jsonify({
+        'id': article.id,
+        'title': article.title,
+        'text': article.text,
+        'category': article.category,
+        'author': article.author.name,
+        'created_date': article.created_date.isoformat()
+    })
+
+@app.route('/api/protected/articles/<int:id>', methods=['DELETE'])
+@jwt_required
+def api_delete_article_protected(current_user, id):
+    article = Article.query.get_or_404(id)
+    
+    if article.user_id != current_user.id:
+        return jsonify({'error': 'You can only delete your own articles'}), 403
+    
+    db.session.delete(article)
+    db.session.commit()
+    
+    return jsonify({'message': 'Article deleted successfully'})
+
+@app.route('/api/protected/profile', methods=['GET'])
+@jwt_required
+def api_get_profile(current_user):
+    return jsonify({
+        'id': current_user.id,
+        'name': current_user.name,
+        'email': current_user.email
+    })
+
+@app.route('/api/protected/comment', methods=['POST'])
+@jwt_required
+def api_create_comment_protected(current_user):
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    errors = {}
+    if not data.get('text') or not data['text'].strip():
+        errors['text'] = 'Text is required'
+    if not data.get('article_id'):
+        errors['article_id'] = 'Article ID is required'
+    
+    if errors:
+        return jsonify({'errors': errors}), 400
+    
+    article = Article.query.get(data['article_id'])
+    if not article:
+        return jsonify({'error': 'Article not found'}), 404
+    
+    comment = Comment(
+        text=data['text'].strip(),
+        author_name=current_user.name,  
+        article_id=data['article_id'],
+        date=datetime.now()
+    )
+    
+    db.session.add(comment)
+    db.session.commit()
+    
+    return jsonify({
+        'id': comment.id,
+        'text': comment.text,
+        'author_name': comment.author_name,
+        'article_id': comment.article_id,
+        'date': comment.date.isoformat(),
+        'user_id': current_user.id  
+    }), 201
 
 @app.route('/api/articles', methods=['GET'])
 def api_get_articles():
-    
     articles = Article.query.all()
     result = []
     for article in articles:
@@ -133,10 +447,8 @@ def api_get_articles():
         })
     return jsonify(result)
 
-
 @app.route('/api/articles/<int:id>', methods=['GET'])
 def api_get_article(id):
-    
     article = Article.query.get_or_404(id)
     return jsonify({
         'id': article.id,
@@ -148,16 +460,13 @@ def api_get_article(id):
         'created_date': article.created_date.isoformat()
     })
 
-
 @app.route('/api/articles', methods=['POST'])
 def api_create_article():
-
     data = request.get_json()
     
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
     
-
     errors = {}
     if not data.get('title') or not data['title'].strip():
         errors['title'] = 'Title is required'
@@ -171,12 +480,10 @@ def api_create_article():
     if errors:
         return jsonify({'errors': errors}), 400
     
-
     author = User.query.get(data['author_id'])
     if not author:
         return jsonify({'error': 'Author not found'}), 404
     
-   
     article = Article(
         title=data['title'].strip(),
         text=data['text'].strip(),
@@ -197,17 +504,14 @@ def api_create_article():
         'created_date': article.created_date.isoformat()
     }), 201
 
-
 @app.route('/api/articles/<int:id>', methods=['PUT'])
 def api_update_article(id):
-
     article = Article.query.get_or_404(id)
     data = request.get_json()
     
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
     
-
     errors = {}
     if 'title' in data and (not data['title'] or not data['title'].strip()):
         errors['title'] = 'Title cannot be empty'
@@ -219,7 +523,6 @@ def api_update_article(id):
     if errors:
         return jsonify({'errors': errors}), 400
     
-
     if 'title' in data:
         article.title = data['title'].strip()
     if 'text' in data:
@@ -238,10 +541,8 @@ def api_update_article(id):
         'created_date': article.created_date.isoformat()
     })
 
-
 @app.route('/api/articles/<int:id>', methods=['DELETE'])
 def api_delete_article(id):
-    
     article = Article.query.get_or_404(id)
     
     db.session.delete(article)
@@ -249,10 +550,8 @@ def api_delete_article(id):
     
     return jsonify({'message': 'Article deleted successfully'})
 
-
 @app.route('/api/articles/category/<category>', methods=['GET'])
 def api_get_articles_by_category(category):
-    
     articles = Article.query.filter_by(category=category).all()
     
     if not articles:
@@ -271,10 +570,8 @@ def api_get_articles_by_category(category):
     
     return jsonify(result)
 
-
 @app.route('/api/articles/sort/date', methods=['GET'])
 def api_get_articles_sorted_by_date():
-    
     sort_order = request.args.get('order', 'desc')  
     
     if sort_order == 'asc':
@@ -295,10 +592,8 @@ def api_get_articles_sorted_by_date():
     
     return jsonify(result)
 
-
 @app.route('/api/comment', methods=['GET'])
 def api_get_comments():
-
     comments = Comment.query.all()
     result = []
 
@@ -313,10 +608,8 @@ def api_get_comments():
         
     return jsonify(result)
 
-
 @app.route('/api/comment/<int:id>', methods=['GET'])
 def api_get_comment(id):
-
     comment = Comment.query.get_or_404(id)
     return jsonify({
         'id': comment.id,
@@ -326,16 +619,13 @@ def api_get_comment(id):
         'date': comment.date.isoformat()
     })
 
-
 @app.route('/api/comment', methods=['POST'])
 def api_create_comment():
-
     data = request.get_json()
     
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
     
-
     errors = {}
     if not data.get('text') or not data['text'].strip():
         errors['text'] = 'Text is required'
@@ -346,16 +636,13 @@ def api_create_comment():
     if not data.get('article_id'):
         errors['article_id'] = 'Article ID is required'
     
-
     if errors:
         return jsonify({'errors': errors}), 400
     
-
     article = Article.query.get(data['article_id'])
     if not article:
         return jsonify({'error': 'Article not found'}), 404
     
-
     comment = Comment(
         text=data['text'].strip(),
         author_name=data['author_name'].strip(),
@@ -374,17 +661,14 @@ def api_create_comment():
         'date': comment.date.isoformat()
     }), 201
 
-
 @app.route('/api/comment/<int:id>', methods=['PUT'])
 def api_update_comment(id):
-
     comment = Comment.query.get_or_404(id)
     data = request.get_json()
     
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
     
-
     errors = {}
     if 'text' in data and (not data['text'] or not data['text'].strip()):
         errors['text'] = 'Text cannot be empty'
@@ -395,7 +679,6 @@ def api_update_comment(id):
     if errors:
         return jsonify({'errors': errors}), 400
     
-
     if 'text' in data:
         comment.text = data['text'].strip()
     if 'author_name' in data:
@@ -411,18 +694,14 @@ def api_update_comment(id):
         'date': comment.date.isoformat()
     })
 
-
 @app.route('/api/comment/<int:id>', methods=['DELETE'])
 def api_delete_comment(id):
-
     comment = Comment.query.get_or_404(id)
     
     db.session.delete(comment)
     db.session.commit()
     
     return jsonify({'message': 'Comment deleted successfully'})
-
-
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -478,7 +757,6 @@ def register():
     
     return render_template('register.html')
 
-
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -512,29 +790,24 @@ def login():
     
     return render_template('login.html')
 
-
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
 @app.route("/")
 def index():
     articles = get_articles()
     return render_template('index.html', articles=articles)
 
-
 @app.route("/about")
 def about():
     return render_template('about.html')
 
-
 @app.route("/contact")
 def contact():
     return render_template('contact.html')
-
 
 @app.route("/feedback", methods=['POST','GET'])
 def feedback():
@@ -563,7 +836,6 @@ def feedback():
     else:
         return render_template('feedback.html')
 
-
 @app.route('/news/<int:id>')
 def news(id):
     article = Article.query.get_or_404(id)
@@ -581,7 +853,6 @@ def news(id):
     }
     
     return render_template('news_detail.html', article=article_data, comments=comments)
-
 
 @app.route('/add-comment/<int:article_id>', methods=['POST'])
 @login_required 
@@ -626,7 +897,6 @@ def add_comment(article_id):
 
     return redirect(url_for('news', id=article_id))
 
-
 @app.route('/create-article', methods=['POST', 'GET'])
 @login_required
 def create_article():
@@ -664,7 +934,6 @@ def create_article():
         return redirect(url_for('news', id=article.id))
 
     return render_template('create_article.html')
-
 
 @app.route('/edit-article/<int:id>', methods=['POST', 'GET'])
 @login_required
@@ -704,7 +973,6 @@ def edit_article(id):
 
     return render_template('edit_article.html', article=article)
 
-
 @app.route('/delete-article/<int:id>', methods=['POST'])
 @login_required
 def delete_article(id):
@@ -718,7 +986,6 @@ def delete_article(id):
     db.session.commit()
     return redirect(url_for('index'))
 
-
 @app.route("/articles")
 def articles():
     category = request.args.get('category', '').strip()
@@ -728,7 +995,6 @@ def articles():
     
     articles = get_articles()
     return render_template('articles.html', articles=articles)
-
 
 @app.route("/articles/<category>")
 def articles_by_category(category):
@@ -740,7 +1006,6 @@ def articles_by_category(category):
     
     articles = get_articles(category=category)
     return render_template('articles.html', articles=articles, current_category=category)
-
 
 if __name__ == '__main__':
     init_db()
